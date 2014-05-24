@@ -1,0 +1,29 @@
+{
+  "Name": "complexity",
+
+  "Categories": {
+    "low": {
+      "Red":   [1, 5],
+      "Green": [1, 5],
+      "Blue":  [1, 5]
+    },
+
+    "medium": {
+      "Red":   [6, 10],
+      "Green": [6, 10],
+      "Blue":  [6, 10]
+    },
+
+    "high": {
+      "Red":   [10, 20],
+      "Green": [10, 20],
+      "Blue":  [10, 20]
+    }
+  },
+
+  "Weights": {
+    "Red": 1,
+    "Green": 2,
+    "Blue": 1
+  }
+}
