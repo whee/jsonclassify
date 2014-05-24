@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -31,6 +32,10 @@ func NewClassifier(file string) (*Classifier, error) {
 	return &c, err
 }
 
+func (c *Classifier) Classify(d map[string]interface{}) string {
+	return d["Data"].(string)
+}
+
 func main() {
 	if len(os.Args) != 2 {
 		log.Fatal("Usage: jsonclassify [configuration file]\n")
@@ -41,4 +46,25 @@ func main() {
 		log.Fatal(err)
 	}
 
+	dec := json.NewDecoder(os.Stdin)
+	enc := json.NewEncoder(os.Stdout)
+
+	for {
+		var jsd map[string]interface{}
+		if err := dec.Decode(&jsd); err != nil {
+			if err == io.EOF {
+				break
+			}
+			log.Fatal(err)
+		}
+
+		if _, ok := jsd["Attributes"]; !ok {
+			jsd["Attributes"] = make(map[string]interface{})
+		}
+
+		jsd["Attributes"].(map[string]interface{})[c.Name] = c.Classify(jsd)
+		if err := enc.Encode(&jsd); err != nil {
+			log.Fatal(err)
+		}
+	}
 }
