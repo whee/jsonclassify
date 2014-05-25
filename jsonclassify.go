@@ -78,11 +78,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		if _, ok := jsd["Attributes"]; !ok {
-			jsd["Attributes"] = make(map[string]interface{})
-		}
-
-		jsd["Attributes"].(map[string]interface{})[c.Name] = c.Classify(jsd)
+		jsd[c.Name] = c.Classify(jsd)
 		if err := enc.Encode(&jsd); err != nil {
 			log.Fatal(err)
 		}
