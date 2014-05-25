@@ -8,18 +8,14 @@ import (
 	"os"
 )
 
-type Attributes map[string][]int
+type Attributes map[string][]float64
 type Weights map[string]int
+type Data map[string]interface{}
 
 type Classifier struct {
 	Name       string
 	Categories map[string]Attributes
 	Weights    Weights
-}
-
-type Category struct {
-	Name       string
-	Attributes map[string][]int
 }
 
 func NewClassifier(file string) (*Classifier, error) {
@@ -32,8 +28,32 @@ func NewClassifier(file string) (*Classifier, error) {
 	return &c, err
 }
 
-func (c *Classifier) Classify(d map[string]interface{}) string {
-	return d["Data"].(string)
+func (c *Classifier) Classify(d Data) string {
+	var high int
+	var category string
+	for cat, attrs := range c.Categories {
+		if s := attrs.Score(d, c.Weights); s > high {
+			high = s
+			category = cat
+		}
+	}
+	return category
+}
+
+func (a Attributes) Score(d Data, w Weights) int {
+	var score int
+	for attr, i := range a {
+		if d[attr] == nil {
+			continue
+		}
+
+		low, high := i[0], i[1]
+		val := d[attr].(float64)
+		if val >= low && val < high {
+			score += w[attr]
+		}
+	}
+	return score
 }
 
 func main() {
@@ -50,7 +70,7 @@ func main() {
 	enc := json.NewEncoder(os.Stdout)
 
 	for {
-		var jsd map[string]interface{}
+		var jsd Data
 		if err := dec.Decode(&jsd); err != nil {
 			if err == io.EOF {
 				break
