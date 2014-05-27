@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strconv"
 )
 
 type Attributes map[string][]float64
@@ -50,9 +51,15 @@ func (a Attributes) Score(d Data, w Weights) int {
 		if d[attr] == nil {
 			continue
 		}
-
 		low, high := i[0], i[1]
-		val := d[attr].(float64)
+		val, ok := d[attr].(float64)
+		if !ok {
+			var err error
+			val, err = strconv.ParseFloat(d[attr].(string), 64)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 		if val >= low && val < high {
 			score += w[attr]
 		}
