@@ -80,17 +80,33 @@ func main() {
 	dec := json.NewDecoder(os.Stdin)
 	enc := json.NewEncoder(os.Stdout)
 
-	for {
-		var jsd Data
-		if err := dec.Decode(&jsd); err != nil {
-			if err == io.EOF {
-				break
-			}
-			log.Fatal(err)
-		}
+	decoded := make(chan Data, 10)
+	scored := make(chan Data, 10)
 
-		jsd[c.Name] = c.Classify(jsd)
-		if err := enc.Encode(&jsd); err != nil {
+	go func() {
+		defer close(decoded)
+		for {
+			var jsd Data
+			if err := dec.Decode(&jsd); err != nil {
+				if err == io.EOF {
+					return
+				}
+				log.Fatal(err)
+			}
+			decoded <- jsd
+		}
+	}()
+
+	go func() {
+		defer close(scored)
+		for d := range decoded {
+			d[c.Name] = c.Classify(d)
+			scored <- d
+		}
+	}()
+
+	for s := range scored {
+		if err := enc.Encode(&s); err != nil {
 			log.Fatal(err)
 		}
 	}
