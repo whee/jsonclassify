@@ -19,8 +19,14 @@ type Data map[string]interface{}
 
 type Classifier struct {
 	Name       string
+	ScoreName  string
 	Categories map[string]Attributes
 	Weights    Weights
+}
+
+type Category struct {
+	Name  string
+	Score int
 }
 
 func NewClassifier(file string) (*Classifier, error) {
@@ -30,19 +36,18 @@ func NewClassifier(file string) (*Classifier, error) {
 	}
 	var c Classifier
 	err = json.Unmarshal(configData, &c)
+	c.ScoreName = c.Name + " Score"
 	return &c, err
 }
 
-func (c *Classifier) Classify(d Data) string {
-	var high int
-	var category string
-	for cat, attrs := range c.Categories {
-		if s := attrs.Score(d, c.Weights); s > high {
-			high = s
-			category = cat
+func (c *Classifier) Classify(d Data) Category {
+	var cat Category
+	for name, attrs := range c.Categories {
+		if s := attrs.Score(d, c.Weights); s > cat.Score {
+			cat = Category{name, s}
 		}
 	}
-	return category
+	return cat
 }
 
 func (a Attributes) Score(d Data, w Weights) int {
@@ -100,7 +105,9 @@ func main() {
 	go func() {
 		defer close(scored)
 		for d := range decoded {
-			d[c.Name] = c.Classify(d)
+			category := c.Classify(d)
+			d[c.Name] = category.Name
+			d[c.ScoreName] = category.Score
 			scored <- d
 		}
 	}()
