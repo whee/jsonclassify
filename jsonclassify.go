@@ -10,7 +10,9 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"sort"
 	"strconv"
+	"strings"
 )
 
 type Attributes map[string][]float64
@@ -25,7 +27,7 @@ type Classifier struct {
 }
 
 type Category struct {
-	Name  string
+	Name  []string
 	Score int
 }
 
@@ -43,10 +45,12 @@ func NewClassifier(file string) (*Classifier, error) {
 func (c *Classifier) Classify(d Data) Category {
 	var cat Category
 	for name, attrs := range c.Categories {
-		if s := attrs.Score(d, c.Weights); s > cat.Score {
-			cat = Category{name, s}
+		if s := attrs.Score(d, c.Weights); s >= cat.Score {
+			cat.Score = s
+			cat.Name = append(cat.Name, name)
 		}
 	}
+	sort.Strings(cat.Name)
 	return cat
 }
 
@@ -106,7 +110,7 @@ func main() {
 		defer close(scored)
 		for d := range decoded {
 			category := c.Classify(d)
-			d[c.Name] = category.Name
+			d[c.Name] = strings.Join(category.Name, " & ")
 			d[c.ScoreName] = category.Score
 			scored <- d
 		}
