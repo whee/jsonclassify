@@ -45,9 +45,13 @@ func NewClassifier(file string) (*Classifier, error) {
 func (c *Classifier) Classify(d Data) Category {
 	var cat Category
 	for name, attrs := range c.Categories {
-		if s := attrs.Score(d, c.Weights); s >= cat.Score {
-			cat.Score = s
+		s := attrs.Score(d, c.Weights)
+		switch {
+		case s == cat.Score:
 			cat.Name = append(cat.Name, name)
+		case s > cat.Score:
+			cat.Score = s
+			cat.Name = []string{name}
 		}
 	}
 	sort.Strings(cat.Name)
